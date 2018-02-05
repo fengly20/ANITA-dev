@@ -1,2 +1,2 @@
-# ANITA_pilot
+# ANITA-dev
 Pilot repository for ANITA
