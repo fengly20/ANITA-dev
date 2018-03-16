@@ -305,6 +305,9 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
           mae_linear = mae_lin;
           noise_out = noise;
       end % end of  if mae_lin/noise <= bail_thresh
+      rises = diff(final_coeffs);
+      runs = diff(final_knots);     
+      runs_days = runs/1000*365;
   catch
       complexity = -999;
       final_knots = -999;
@@ -312,10 +315,13 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
       mae_final_ortho = -999;
       mae_linear = -999;
       noise_out = -999;
+      rises = -999;
+      runs = -999;
+      runs_days = -999;
   end % end of try-catch
 
 %results output
-  results_cell = {complexity final_knots final_coeffs mae_linear mae_final_ortho noise_out};
+  results_cell = {complexity final_knots final_coeffs mae_linear mae_final_ortho noise_out rises runs runs_days};
 
 %"progress bar" (can reinstate if using multicore)
 %       ff('line: %u\n',line_num)
