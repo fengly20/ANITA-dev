@@ -5,5 +5,3 @@ yymmdd = [str2num(img_yeardate(1:4)), str2num(img_yeardate(5:6)), str2num(img_ye
 img_yeardate = str2num(img_yeardate);
 img_doy = day(datetime(yymmdd), 'dayofyear');
 end
-
-

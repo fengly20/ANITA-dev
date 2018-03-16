@@ -8,3 +8,4 @@ function [num_segs, bic_remove] = calBIC(ortho_err,keep_knots,penalty)
   num_segs=length(keep_knots)-1;
 %user-defined penalty parameter
   bic_remove = -2*loglik+penalty*num_segs*log(length(ortho_err));
+  

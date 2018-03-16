@@ -20,4 +20,3 @@ function [cand_idx,coeff] = findNextCandidate(coeff_indices,search_series_curren
   cand_idx_filt = cand_idx-((filt_dist-1)/2):1:cand_idx+((filt_dist-1)/2);
   coeff = prctile(y(cand_idx_filt),pct);
   
-  
