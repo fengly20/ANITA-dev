@@ -11,16 +11,14 @@
 %       posistive numbers and negative numbers. For breakpoint detection,
 %       the large chnage point can be identified as a breakpoint no matter
 %       it's posistive or negative so abs() is applied on zscore. 
-function [mae_lin,cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,x)
+function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,x)
 
   dist = min(dist,[],2);
 
   mov_mean = movmean(dist,filt_dist);
   mov_std = movstd(dist,filt_dist);
   
-  mov_cv = mov_mean./mov_std;
-  
-  mae_lin = mean(dist); % mean or median            
+  mov_cv = mov_mean./mov_std;        
   
   if nargin > 5
       zscore = (x-mov_mean)./mov_std;
@@ -40,7 +38,7 @@ function [mae_lin,cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,p
   search_series_less = search_series;
   cand_idx_in_ssless = cand_idx;
   while not_done
-      if cand_idx > (length(y)-filt_dist) || cand_idx < filt_dist
+      if cand_idx>(length(y)-filt_dist) || cand_idx<(filt_dist+1)
           search_series_less(cand_idx_in_ssless) = [];
           cand_idx = find(search_series==max(search_series_less),1);
           cand_idx_in_ssless = find(search_series_less==search_series(cand_idx));
