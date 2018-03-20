@@ -92,9 +92,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 %loop through all samples of line (1 x numSamp x numDates)
   
   try
-      clear mad; clear mov_cv; clear slm; clear mae_ortho;
-      clear coeff_indices;
-
+      
 % --- 
 % 0.5 prepare x and y 
     %set x and y
@@ -135,8 +133,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
       pts = [x y];
 
       dist_init = calDistance(knot_set,coeff_set, pts);
-
-      [mae_lin,~,~,~] = findCandidate(dist_init,filt_dist,pct,y);
+      mae_lin = calMae(dist_init);
 
     %set knot location and establish tentative knot set (comprised
     %currently of start date, first candidate breakpoint, and end
@@ -163,35 +160,38 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                                 
         %set starting conditions for while loop
-          pos = 1;
-          mae_ortho(pos) = mae_lin;
+          complexity_count = length(knot_set)-1;
+          mae_ortho(complexity_count) = mae_lin;
         %this will run until max_complex or until there are no more
         %viable breakpoints to add.
-          while pos~=max_complex 
-              pos = pos+1;
+          while complexity_count~=max_complex 
+              complexity_count = complexity_count + 1;
             %ortho error using the current knot set
               clear dist
               dist = calDistance(knot_set,coeff_set, pts);
-              [mae_ortho(pos),cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y);
+              [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y);
                     
               while sum(ismember(coeff_indices,cand_idx))~=0   
                   [cand_idx,coeff] = findNextCandidate(coeff_indices,search_series,filt_dist,pct,y);        
               end
          
-              knot_loc = x(cand_idx);  
-              [knot_set,coeff_set,coeff_indices] = updateknotcoeffSet(knot_set,coeff_set,coeff_indices,knot_loc,cand_idx,coeff);
-
+              if cand_idx == -999
+                  break
+              end
+              
+              [knot_set,coeff_set,coeff_indices] = updateknotcoeffSet(knot_set,coeff_set,coeff_indices,x,cand_idx,coeff);
+              dist_new = calDistance(knot_set,coeff_set, pts);
+              mae_ortho(complexity_count) = calMae(dist_new);
+              
               %diagnostic plotting
 %             figure, hold on
 %             plot(x,y,'.')
 %             plot(knot_set_hold,coeff_set,'or')
 %             axis([min(x) max(x) -2 2])
-
-          end % end while pos~=max_complex 
+          end % end of while complexity_count~=max_complex 
  
         %grab final error
-          %mae_final = mae_ortho(pos-1);
-          mae_final = mae_ortho(pos);
+          mae_final = mae_ortho(complexity_count-1);
         %working on roll back
           %keep_knots = knots_prev;
           %keep_coeffs = coeffs_prev;
@@ -228,15 +228,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
           [~, unq_idx] = unique(keep_knots);
           yinterp1 = interp1(knots_max(unq_idx),coeffs_max(unq_idx),x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
-          while pos ~= max_complex
-            %show the interpolated line in red
-%             if diag_plots==1
-%                 figure, hold on
-%                 plot(x,y,'k.')
-%                 plot(x, yinterp1,'.r')
-%                 plot(keep_knots,keep_coeffs,'o')
-                 %axis([min(x) max(x) -3.5 1.5])
-%             end % end of if diag_plots==1
+          while pos ~= complexity_count
 
             %loop through knots, removing each and checking which
             %raises MAE the least compared to weighted data
@@ -269,7 +261,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
                 keep_knots = keep_knots(keep_idx{pos});
             end % end of if pos==1
               pos = pos + 1;
-          end % end of while pos ~= max_complex
+          end % end of while pos ~= complexity_count
    
           
           bic_idx = find(bic_remove==min(bic_remove));
