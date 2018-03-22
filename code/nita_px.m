@@ -310,10 +310,11 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
       rises = -999;
       runs = -999;
       runs_days = -999;
+      pts = -999;
   end % end of try-catch
 
 %results output
-  results_cell = {complexity final_knots final_coeffs mae_linear mae_final_ortho noise_out rises runs runs_days};
+  results_cell = {complexity final_knots final_coeffs mae_linear mae_final_ortho noise_out rises runs runs_days pts};
 
 %"progress bar" (can reinstate if using multicore)
 %       ff('line: %u\n',line_num)
