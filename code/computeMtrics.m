@@ -1,4 +1,4 @@
-function [metrics_cell] = computeMtrics(results_cell,vi_change_thres,run_thres,recovery)
+function [metrics_cell] = computeMtrics(results_cell,vi_change_thres,run_thres,recovery, vi_thres)
 %%
 % The function for now only cares about first disturbance in the time
 % series, any scenarios assuming having multiple disturbances may end up
@@ -72,16 +72,26 @@ try
             coeffs_by_year(1) =coeffs(1);
             coeffs_by_year(end) = coeffs(end);
         
+          % find the recovery value   
             [~,temp_idx]= min(abs(dist_date_nadir+2000-study_years_1000));
-            approximate_2yrs_date = study_years_1000(temp_idx); 
+            %approximate_2yrs_date = study_years_1000(temp_idx); 
             recov_2yr = coeffs_by_year(temp_idx);
             
             [~,temp_idx]= min(abs(dist_date_nadir+4000-study_years_1000));
-            approximate_4yrs_date = study_years_1000(temp_idx); 
+            %approximate_4yrs_date = study_years_1000(temp_idx); 
             recov_4yr = coeffs_by_year(temp_idx);
+            
+          % find the vi_thres date
+            [~,temp_idx]= min(abs(coeffs_by_year-vi_thres));
+            if min(abs(coeffs_by_year-vi_thres))<(0.1*vi_thres)
+                thres_year = floor(study_years_1000(temp_idx)/1000);
+            else 
+                thres_year = NaN;
+            end
         else
             recov_2yr = NaN;
             recov_4yr = NaN;
+            thres_year = NaN;
         end % end of if nargin > 3            
 
   % 2.b case that there's no disturbance   
@@ -98,7 +108,8 @@ try
 
         recov_4yr = NaN;
         recov_2yr = NaN;
-                
+        
+        thres_year = NaN;
     end % end of if not(isempty(dist_idx))  
     
 catch %in the case of no data at all
@@ -114,6 +125,8 @@ catch %in the case of no data at all
 
     recov_4yr = NaN;
     recov_2yr = NaN;
+    
+    thres_year = NaN;
 end % end of try 
                   
 metrics_cell = {num_dist cum_mag_dist...
@@ -121,6 +134,7 @@ metrics_cell = {num_dist cum_mag_dist...
     dist_duration dist_slope...
     coeff_nadir...
     post_dist_slp post_dist_mag...
-    recov_2yr recov_4yr};     
+    recov_2yr recov_4yr...
+    thres_year};     
 end % end of the function 
        
