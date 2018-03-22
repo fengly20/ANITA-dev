@@ -26,7 +26,13 @@ function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,x)
   else 
       search_series = mov_cv;
   end
-      
+   
+  if length(unique(search_series))~=length(search_series)
+      noise_amplitude = 0.00000000000001;
+      noise = noise_amplitude*randn(1, length(search_series))';
+      search_series = search_series+noise;
+  end
+  
   cand_idx = find(search_series==max(search_series),1);
     
 % if the candidate point is within filt_dist of beginning or end
