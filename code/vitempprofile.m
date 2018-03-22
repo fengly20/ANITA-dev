@@ -39,8 +39,7 @@ if nargin<8
         end
         hold off
 else
-    figure, scatter(year_vec(include_idx),y(include_idx), 20, c(include_idx),...
-        'filled'); hold on, box on
+    figure, scatter(year_vec(include_idx),y(include_idx), 20, c(include_idx), 'filled'); hold on, box on
         
         if iscell(knot_set)
             knots_x = knot_set{yi}{xi};
