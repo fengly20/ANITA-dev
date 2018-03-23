@@ -1,4 +1,4 @@
-function  [noise,fit_count] = viewNITA(vi,im_date,results_cell,doy,option)
+function  [bail_cut,fit_count] = viewNITA(vi,im_date,results_cell,doy,option)
 
 % cleaning up vi and ima_date
 y = vi;
@@ -38,7 +38,7 @@ if option == 'fitvi'
     hold off   
 end
 
-noise = results_cell{6};
+bail_cut = results_cell{4}/results_cell{6};
 fit_count = length(fit_y);
 
 end
