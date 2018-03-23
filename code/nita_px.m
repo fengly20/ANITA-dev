@@ -44,7 +44,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 %filt_dist: Set the size of the search window (i.e., number of adjacent
 %image dates) over which to search for breaks. Higher filt_dist values
 %(e.g., 7 or 9) will result in fewer sharp breaks. Higher is better in very
-%noisy data but 3 is freqently a good starting place.
+%noisy data but 3 is frequently a good starting place.
 
 %pct: "percentile" -- this is the "float" parameter. How do you want your
 %fit to float on the data? If you're modeling NDVI change, you may want pct
@@ -110,7 +110,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
             
     %filter by abs(diff) to get rid of bad noise per user threshold
       diff_holder = diff(y);
-      good_idx = find(diff_holder >- noise_thresh)+1;
+      good_idx = find(abs(diff_holder) <= noise_thresh)+1;
       x = x(good_idx);
       y = y(good_idx);
       x_len = length(x);
