@@ -18,6 +18,10 @@ function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,x)
   mov_mean = movmean(dist,filt_dist);
   mov_std = movstd(dist,filt_dist);
   
+  if sum(mov_std) == 0
+      mov_std = mov_std+1;
+  end
+  
   mov_cv = mov_mean./mov_std;        
   
   if nargin > 5
@@ -26,32 +30,19 @@ function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,x)
   else 
       search_series = mov_cv;
   end
-   
+
+  % in case that search_series has two (or more) max values equal to each
+  % other, add a bit white noise to ensure that each value is unique 
   if length(unique(search_series))~=length(search_series)
       noise_amplitude = 0.00000000000001;
       noise = noise_amplitude*randn(1, length(search_series))';
       search_series = search_series+noise;
   end
   
-  cand_idx = find(search_series==max(search_series),1);
-    
-% if the candidate point is within filt_dist of beginning or end
-% of time series, ignore and search for another point. 
-% there's a possiblity of the next found cand_idx is also with the filt_dist
-% of beginning or end of time series so use while loop to ensure 
-
-  not_done = true;
-  search_series_less = search_series;
-  cand_idx_in_ssless = cand_idx;
-  while not_done
-      if cand_idx>(length(y)-filt_dist) || cand_idx<(filt_dist+1)
-          search_series_less(cand_idx_in_ssless) = [];
-          cand_idx = find(search_series==max(search_series_less),1);
-          cand_idx_in_ssless = find(search_series_less==search_series(cand_idx));
-      else
-          not_done = false;
-      end
-  end
+  % candidate point needs to be found out of filt_dist of beginning or end
+  % of time series
+  search_series_inner = search_series((filt_dist+1):(length(search_series)-filt_dist));
+  cand_idx = find(search_series==max(search_series_inner),1);
   
   cand_idx_filt = cand_idx-((filt_dist-1)/2):1:cand_idx+((filt_dist-1)/2);
   coeff = prctile(y(cand_idx_filt),pct);
