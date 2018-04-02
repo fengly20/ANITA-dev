@@ -69,7 +69,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 %NO. If you run a full image with diag_plots == 1, your computer will
 %crash. The right answer is almost always "0".
 
-
+%%
 % ---
 % 0. check the input px, date_vec
 
@@ -90,9 +90,9 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 %  final_coeffs = cell(size(px,2),1);
 
 %loop through all samples of line (1 x numSamp x numDates)
-  
+%%  
   try
-      
+%%      
 % --- 
 % 0.5 prepare x and y 
     %set x and y
@@ -114,7 +114,14 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
       x = x(good_idx);
       y = y(good_idx);
       x_len = length(x);
-
+%% 
+% ---
+% 0.6 sanity check of x and y 
+    % check for adequate date 
+      if x_len <= (filt_dist*2) 
+          error(''); 
+      end
+%%
 % ---
 % 1. single line fit 
     %set starting coeffs (first date and last date and first SI
@@ -126,7 +133,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
     %use orthogonal distance from that line to find location of
     %first candidate breakpoint
     %ortho error
-      knot_set =  [min(x);max(x)];
+      knot_set =  [x(1);x(end)]; 
       coeff_set = [first_coeff;last_coeff];
       coeff_indices = [1;x_len];
       
@@ -149,11 +156,12 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
           plot(knot_set, coeff_set)
           %plot(x,mov_cv*1,'-g')
       end
-      
+%%      
 % ---
 % 2. NITA
+
       if mae_lin/noise > bail_thresh %determine whether to run full code
-       
+%%       
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %In here, is the nita build phase, where breakpoint
         %locations are selected and added up to max_complex
@@ -252,8 +260,8 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
                 knot_storage{1} = knots_max;
                 coeff_storage{1} = coeffs_max;
             else                       
-                knot_storage{pos+1} = keep_knots(keep_idx{pos});
-                coeff_storage{pos+1} = keep_coeffs(keep_idx{pos});
+                knot_storage{pos} = keep_knots(keep_idx{pos});
+                coeff_storage{pos} = keep_coeffs(keep_idx{pos});
 
               %reduce the number of knots and coeffs each
               %iteration
