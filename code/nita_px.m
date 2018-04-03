@@ -167,39 +167,32 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
         %locations are selected and added up to max_complex
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                                 
-        %set starting conditions for while loop
-          complexity_count = length(knot_set)-1;
-          mae_ortho(complexity_count) = mae_lin;
+        %set starting conditions for for-loop
+          mae_ortho(1) = mae_lin;
         %this will run until max_complex or until there are no more
         %viable breakpoints to add.
-          while complexity_count~=max_complex 
-              complexity_count = complexity_count + 1;
-            %ortho error using the current knot set
-              clear dist
-              dist = calDistance(knot_set,coeff_set, pts);
-              [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y);
+          for i=2:max_complex 
+              %ortho error using the current knot set
+                clear dist
+                dist = calDistance(knot_set,coeff_set,pts);
+                [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y);
                     
-              while sum(ismember(coeff_indices,cand_idx))~=0   
-                  [cand_idx,coeff] = findNextCandidate(coeff_indices,search_series,filt_dist,pct,y);        
-              end
+                while sum(ismember(coeff_indices,cand_idx))~=0   
+                    [cand_idx,coeff] = findNextCandidate(coeff_indices,search_series,filt_dist,pct,y);        
+                end
          
-              if cand_idx == -999
-                  break
-              end
+                if cand_idx == -999
+                    break
+                end
               
-              [knot_set,coeff_set,coeff_indices] = updateknotcoeffSet(knot_set,coeff_set,coeff_indices,x,cand_idx,coeff);
-              dist_new = calDistance(knot_set,coeff_set, pts);
-              mae_ortho(complexity_count) = calMae(dist_new);
-              
-              %diagnostic plotting
-%             figure, hold on
-%             plot(x,y,'.')
-%             plot(knot_set_hold,coeff_set,'or')
-%             axis([min(x) max(x) -2 2])
-          end % end of while complexity_count~=max_complex 
+                [knot_set,coeff_set,coeff_indices] = updateknotcoeffSet(knot_set,coeff_set,coeff_indices,x,cand_idx,coeff);
+                dist_new = calDistance(knot_set,coeff_set, pts);
+                mae_ortho(i) = calMae(dist_new);
+          end % end of for i=2:max_complex  
  
+          complexity_count = length(knot_set)-1;
         %grab final error
-          mae_final = mae_ortho(complexity_count-1);
+          mae_final = mae_ortho(complexity_count);
         %working on roll back
           %keep_knots = knots_prev;
           %keep_coeffs = coeffs_prev;
@@ -214,7 +207,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 %             axis([min(x) max(x) -5000 7000])
           end % end of if diag_plots == 1
           
-          
+%%          
 % ---
 % 3. now take knots away iteratively
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -232,15 +225,13 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
         %is, check the BIC for num knots = max_complex
         %incrementally down to num knots = 2
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          pos=1;
           [~, unq_idx] = unique(keep_knots);
           yinterp1 = interp1(knots_max(unq_idx),coeffs_max(unq_idx),x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
-          while pos ~= complexity_count
-
+          for i=1:complexity_count
             %loop through knots, removing each and checking which
             %raises MAE the least compared to weighted data
-              keep_idx{pos} = genKeepIdx(keep_knots,keep_coeffs,pts,pct,y_pos_idx);
+              keep_idx{i} = genKeepIdx(keep_knots,keep_coeffs,pts,pct,y_pos_idx);
    
             %need to reccalc ortho_err BEFORE the if statement
             %because the bic will now be the point of entry
@@ -252,26 +243,24 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
             %underestimates are more important to fix.
               ortho_err(y_pos_idx) = ortho_err(y_pos_idx)*pct;
               ortho_err(~y_pos_idx) = ortho_err(~y_pos_idx)*(100-pct);
-              mae_ortho_holder(pos) = mean(min(dist,[],2));
+              mae_ortho_holder(i) = mean(min(dist,[],2));
             
-            [num_segs(pos),bic_remove(pos)] = calBIC(ortho_err,keep_knots,penalty);  
+            [num_segs(i),bic_remove(i)] = calBIC(ortho_err,keep_knots,penalty);  
 
-            if pos==1
-                knot_storage{1} = knots_max;
-                coeff_storage{1} = coeffs_max;
+            if i==1
+                knot_storage{i} = knots_max;
+                coeff_storage{i} = coeffs_max;
             else                       
-                knot_storage{pos} = keep_knots(keep_idx{pos});
-                coeff_storage{pos} = keep_coeffs(keep_idx{pos});
+                knot_storage{i} = keep_knots(keep_idx{i});
+                coeff_storage{i} = keep_coeffs(keep_idx{i});
 
               %reduce the number of knots and coeffs each
               %iteration
-                keep_coeffs = keep_coeffs(keep_idx{pos});
-                keep_knots = keep_knots(keep_idx{pos});
-            end % end of if pos==1
-              pos = pos + 1;
-          end % end of while pos ~= complexity_count
-   
-          
+                keep_coeffs = keep_coeffs(keep_idx{i});
+                keep_knots = keep_knots(keep_idx{i});
+            end 
+          end
+              
           bic_idx = find(bic_remove==min(bic_remove));
           keep_coeffs = coeff_storage{bic_idx};
           keep_knots = knot_storage{bic_idx};
