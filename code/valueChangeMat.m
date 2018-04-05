@@ -1,21 +1,26 @@
-function map_mat = valueChangeMat(results_cells, missing_value,low_high)
+function map_mat = valueChangeMat(start_date,end_time,option,metrics_cells)
 
-if nargin<3
-    low_high = [2 98];
-end
+% duration can be 9999, or distributed date
 
-[rows,cols] = size(results_cells);
-map_mat_raw = zeros(rows,cols);
+[rows,cols] = size(metrics_cells);
+map_mat = zeros(rows,cols);
 
 for i = 1:rows
     for j = 1:cols
-       map_mat_raw(i,j) = results_cells{i,j}{3}(end)-results_cells{i,j}{3}(1) ;
+        
+        if start_date == -9999
+            metrics_cell = metrics_cells{i,j};
+            first_date = metrics_cell{10}(1,1);
+            start_date = first_date;
+        end
+        
+        if end_time == 9999
+            last_date = metrics_cell{10}(end,1);
+            end_date = last_date; 
+        end
+            
+        map_mat(i,j) = valueChange(start_date,end_date,option,metrics_cell);
+
     end
 end
-
-map_mat_raw(isnan(map_mat_raw)) = missing_value;
-
-%contrast stretch the ouput image
-map_mat = vi_stretch(map_mat_raw,low_high);
-
 end

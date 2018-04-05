@@ -1,4 +1,4 @@
-function map_mat = complexityMat(results_cells, missing_value)
+function map_mat = complexityMat(results_cells)
 
 [rows,cols] = size(results_cells);
 map_mat = zeros(rows,cols);
@@ -9,5 +9,5 @@ for i = 1:rows
     end
 end
 
-map_mat(isnan(map_mat)) = missing_value;
+map_mat(map_mat==-999) = NaN;
 end
