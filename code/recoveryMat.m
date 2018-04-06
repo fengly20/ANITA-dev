@@ -7,6 +7,9 @@ delta = duration*1000;
 
 for i = 1:rows
     for j = 1:cols
+        if mod(i,10)==0
+            i
+        end
         metrics_cell = metrics_cells{i,j};
         start_date = metrics_cell{4};
         end_date = start_date+delta;
