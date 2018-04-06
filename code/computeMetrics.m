@@ -53,6 +53,7 @@ try
       % 2.a.1 metrics for first disturbance             
         dist_date_before = knots(dist_idx(1)); % this is an output
         dist_date_nadir = knots(dist_idx(1)+1); % this is an output
+        coeff_before = coeffs(dist_idx(1)); % this is an output
         coeff_nadir = coeffs(dist_idx(1)+1); % this is an output
       %this ONLY works with distributed dates!
         dist_duration = dist_date_nadir - dist_date_before; % this is an output
@@ -80,6 +81,7 @@ try
         post_dist_slp = NaN;
         post_dist_mag = NaN;
         dist_mag = NaN;
+        coeff_before = NaN;
 
     end % end of if not(isempty(dist_idx))  
     
@@ -95,6 +97,7 @@ catch %in the case of no data at all
     post_dist_mag = NaN;
     interp_pts = NaN;
     dist_mag = NaN;
+    coeff_before = NaN;
     
 end % end of try 
                   
@@ -103,6 +106,6 @@ metrics_cell = {num_dist cum_mag_dist...
     dist_duration dist_slope...
     coeff_nadir...
     post_dist_slp post_dist_mag...
-    interp_pts dist_mag};     
+    interp_pts dist_mag coeff_before};     
 end % end of the function 
        
