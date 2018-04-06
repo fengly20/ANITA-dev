@@ -15,7 +15,8 @@ try
         x_start_date = x_dates(x_date_idx);
     end
 
-    if end_date > x_start_date && end_date <= x_dates(end)
+    %if end_date > x_start_date && end_date <= x_dates(end)
+    if end_date <= x_dates(end)
         [~,x_date_idx] = min(abs(x_dates-end_date));
         x_date_idx = x_date_idx(end);
         x_end_date = x_dates(x_date_idx);
