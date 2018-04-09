@@ -1,4 +1,4 @@
-function [metrics_cell] = computeMtrics(results_cell,vi_change_thres,run_thres)
+function [metrics_cell] = computeMetrics(results_cell,vi_change_thres,run_thres,time_step)
 %%
 % The function for now only cares about first disturbance in the time
 % series, any scenarios assuming having multiple disturbances may end up
@@ -33,8 +33,7 @@ try
     study_years = str2double(study_year_first_str(1:4)):str2double(study_year_last_str(1:4)); 
           
     % interpolation 
-    study_years_dis = sort([study_years study_years+0.5])*1000;
-    study_years_dis(end+1) = study_years_dis(end)+500;
+    study_years_dis = [study_years(1):time_step:(study_years(end)+1)]*1000;
     valid_years_idx = find(study_years_dis>knots(1) & study_years_dis<knots(end));
     study_years_all = [knots(1) study_years_dis(valid_years_idx) knots(end)];
     coeff_interp = interp1(knots,coeffs,study_years_all,'linear');
@@ -42,32 +41,53 @@ try
     interp_pts = sortrows(interp_pts); % this is an output
     
   % 2. disturbance detection
-    change_percent = rises./coeffs(1:end-1);
+    change_percent = rises./abs(coeffs(1:end-1));
     slopes = rises./runs*1000; %1000 is one dist_date year
+    temp = change_percent<vi_change_thres & runs_in_days<=run_thres
     dist_idx = find(change_percent<vi_change_thres & runs_in_days<=run_thres);
   % 2.a case of disturbance exists     
     if not(isempty(dist_idx))  
-        num_dist = length(dist_idx); % this is an output 
+        num_dist = sum(diff(dist_idx)>1)+1; % this is an output
+        % num_dist = length(dist_idx); % this is an output 
         cum_mag_dist =sum(abs(rises(dist_idx))); % this is an output; cumulative magnitude disturbance
-        
+         
       % 2.a.1 metrics for first disturbance             
         dist_date_before = knots(dist_idx(1)); % this is an output
-        dist_date_nadir = knots(dist_idx(1)+1); % this is an output
-        coeff_before = coeffs(dist_idx(1)); % this is an output
-        coeff_nadir = coeffs(dist_idx(1)+1); % this is an output
-      %this ONLY works with distributed dates!
-        dist_duration = dist_date_nadir - dist_date_before; % this is an output
-        dist_slope = slopes(dist_idx(1)); % this is an output
-        dist_mag = rises(dist_idx(1)); % this is an output
+        if length(dist_idx)>1 && (dist_idx(2)-dist_idx(1))==1
+            dist_date_nadir = knots(dist_idx(1)+1); % this is an output
+            coeff_before = coeffs(dist_idx(1)); % this is an output
+            coeff_nadir = coeffs(dist_idx(2)+1); % this is an output
+          %this ONLY works with distributed dates!
+            dist_duration = dist_date_nadir-dist_date_before; % this is an output
+            dist_mag = coeff_nadir-coeff_before; % this is an output
+            dist_slope = dist_mag/dist_duration; % this is an output
+               
+            if length(slopes)>dist_idx(2) % this is the case that the disturbance is not the last segament
+                post_dist_slp = slopes(dist_idx(2)+1); % this is an output
+                post_dist_mag = rises(dist_idx(2)+1); % this is an output
+            else % this is the case that the disturbance is the last segament
+                post_dist_slp = NaN; % this is an output
+                post_dist_mag = NaN; % this is an output
+            end
+                    
+        else % length(dist_idx)==1 or more disturbance event
+            dist_date_nadir = knots(dist_idx(1)+1); % this is an output
+            coeff_before = coeffs(dist_idx(1)); % this is an output
+            coeff_nadir = coeffs(dist_idx(1)+1); % this is an output
+          %this ONLY works with distributed dates!
+            dist_duration = dist_date_nadir-dist_date_before; % this is an output
+            dist_slope = slopes(dist_idx(1)); % this is an output
+            dist_mag = rises(dist_idx(1)); % this is an output
       
-      % 2.a.2 first "recovery" (or just segment after first disturbance)
-        if length(slopes)>dist_idx(1) % this is the case that the disturbance is not the last segament
-            post_dist_slp = slopes(dist_idx(1)+1); % this is an output
-            post_dist_mag = rises(dist_idx(1)+1); % this is an output
-        else % this is the case that the disturbance is the last segament
-            post_dist_slp = NaN; % this is an output
-            post_dist_mag = NaN; % this is an output
-        end
+          % 2.a.2 first "recovery" (or just segment after first disturbance)
+            if length(slopes)>dist_idx(1) % this is the case that the disturbance is not the last segament
+                post_dist_slp = slopes(dist_idx(1)+1); % this is an output
+                post_dist_mag = rises(dist_idx(1)+1); % this is an output
+            else % this is the case that the disturbance is the last segament
+                post_dist_slp = NaN; % this is an output
+                post_dist_mag = NaN; % this is an output
+            end
+        end     
         
   % 2.b case that there's no disturbance   
     else
