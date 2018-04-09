@@ -43,7 +43,6 @@ try
   % 2. disturbance detection
     change_percent = rises./abs(coeffs(1:end-1));
     slopes = rises./runs*1000; %1000 is one dist_date year
-    temp = change_percent<vi_change_thres & runs_in_days<=run_thres
     dist_idx = find(change_percent<vi_change_thres & runs_in_days<=run_thres);
   % 2.a case of disturbance exists     
     if not(isempty(dist_idx))  
@@ -54,12 +53,12 @@ try
       % 2.a.1 metrics for first disturbance             
         dist_date_before = knots(dist_idx(1)); % this is an output
         if length(dist_idx)>1 && (dist_idx(2)-dist_idx(1))==1
-            dist_date_nadir = knots(dist_idx(1)+1); % this is an output
+            dist_date_nadir = knots(dist_idx(2)+1); % this is an output
             coeff_before = coeffs(dist_idx(1)); % this is an output
             coeff_nadir = coeffs(dist_idx(2)+1); % this is an output
           %this ONLY works with distributed dates!
             dist_duration = dist_date_nadir-dist_date_before; % this is an output
-            dist_mag = coeff_nadir-coeff_before; % this is an output
+            dist_mag = abs(coeff_nadir-coeff_before); % this is an output
             dist_slope = dist_mag/dist_duration; % this is an output
                
             if length(slopes)>dist_idx(2) % this is the case that the disturbance is not the last segament
