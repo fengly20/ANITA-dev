@@ -16,6 +16,12 @@ function [metrics_cell] = computeMetrics(results_cell,vi_change_thres,run_thres,
 % 
 %%
 % ---
+% 0. check number of input arguments 
+if nargin ~= 4
+    error('Not enough input arguments.\n ')
+end
+
+% ---
 % 1. extract information from results_cell
 knots = results_cell{2};
 coeffs = results_cell{3};

@@ -83,7 +83,19 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
   if size(date_vec,2)>size(date_vec,1)
       date_vec = date_vec';
   end
-    
+  if size(px,2)>size(px,1)
+      px = px';
+  end
+  if size(doy,2)>size(doy,1)
+      doy = doy';
+  end
+
+% remove possible duplicated im_date 
+[~, unq_idx] = unique(date_vec);
+date_vec = date_vec(unq_idx);
+px = px(unq_idx);
+doy = doy(unq_idx);
+  
 %define the cell outputs in advance of loop. Final_knots stores date
 %values and final_coeffs stores spectral index values of breakpoints.
 %  final_knots = cell(size(px,2),1);
