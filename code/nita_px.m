@@ -74,7 +74,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 % 0. check the inputs
 %if user doesn't enter in a compute mask, assign to "1" always
   if nargin<12
-      error('not enough input arguments!';
+      error('not enough input arguments!');
   end
 
 %if user doesn't enter in a compute mask, assign to "1" always
