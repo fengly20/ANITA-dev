@@ -45,7 +45,7 @@ for params_it = 1:size(param_mat,1)
 
         results_cell = nita_px(vi,im_date,param_line(4),param_line(3),...
             param_line(5),param_line(2),...
-            param_line(1),doy,doy_limits,param_line(6),0);
+            param_line(1),doy,doy_limits,param_line(6),0,1);
         
         %[bail_cut,fit_count] = viewNITA(vi,im_date,results_cell,doy,'fitvi','on')
         
