@@ -71,18 +71,22 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 
 %%
 % ---
-% 0. check the input px, date_vec
+% 0. check the inputs
+%if user doesn't enter in a compute mask, assign to "1" always
+  if nargin<12
+      error('not enough input arguments!';
+  end
 
+%if user doesn't enter in a compute mask, assign to "1" always
+  if nargin<13
+      compute_mask=1;
+  end
+  
 %if input image line is not double, it must be converted
   if ~isa(px,'double')
       px = double(px);
   end
   
-%if user doesn't enter in a compute mask, assign to "1" always
-  if nargin<13
-      compute_mask=1;
-  end
-
 %if dates come in as 1xn, need to transpose to nx1 to match the output
 %of squeeze
   if size(date_vec,2)>size(date_vec,1)
