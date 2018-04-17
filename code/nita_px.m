@@ -1,6 +1,6 @@
-function [results_cell] = nita_px(px, date_vec, penalty,...
+function [results_cell] = nita_px_mga(px, date_vec, penalty,...
     bail_thresh, max_complex, filt_dist, pct, doy, doy_limits,...
-    noise_thresh, diag_plots)
+    noise_thresh, diag_plots, user_min_segs, compute_mask )
 
 %% Documentation 
 %anita code purpose:
@@ -76,6 +76,11 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
 %if input image line is not double, it must be converted
   if ~isa(px,'double')
       px = double(px);
+  end
+  
+%if user doesn't enter in a compute mask, assign to "1" always
+  if nargin<13
+      compute_mask=1;
   end
 
 %if dates come in as 1xn, need to transpose to nx1 to match the output
@@ -172,7 +177,7 @@ doy = doy(unq_idx);
 % ---
 % 2. NITA
 
-      if mae_lin/noise > bail_thresh %determine whether to run full code
+      if mae_lin/noise > bail_thresh && compute_mask==1 %determine whether to run full code
 %%       
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %In here, is the nita build phase, where breakpoint
@@ -225,7 +230,7 @@ doy = doy(unq_idx);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %now take knots away iteratively
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          clear mae_ortho; clear bic_remove; clear aic_remove; clear num_segs;
+          clear mae_ortho; clear bic_remove; clear num_segs;
           clear coeff_storage; clear knot_storage;
         
           knots_max = keep_knots;
@@ -240,7 +245,7 @@ doy = doy(unq_idx);
           [~, unq_idx] = unique(keep_knots);
           yinterp1 = interp1(knots_max(unq_idx),coeffs_max(unq_idx),x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
-          for i=1:complexity_count
+          for i=1:complexity_count-(user_min_segs-1)
             %loop through knots, removing each and checking which
             %raises MAE the least compared to weighted data
               keep_idx{i} = genKeepIdx(keep_knots,keep_coeffs,pts,pct,y_pos_idx);
@@ -257,7 +262,7 @@ doy = doy(unq_idx);
               ortho_err(~y_pos_idx) = ortho_err(~y_pos_idx)*(100-pct);
               mae_ortho_holder(i) = mean(min(dist,[],2));
             
-            [num_segs(i),bic_remove(i)] = calBIC(ortho_err,keep_knots,penalty);  
+            bic_remove(i) = calBIC(ortho_err,keep_knots,penalty);  
 
             if i==1
                 knot_storage{i} = knots_max;
@@ -282,7 +287,7 @@ doy = doy(unq_idx);
               figure, hold on
               plot(x,y,'r.')
               plot(keep_knots,keep_coeffs,'o')
-              ine(keep_knots, keep_coeffs)
+              plot(keep_knots, keep_coeffs)
 %             axis([min(x) max(x) -5000 7000])
           end % end of if diag_plots == 1
           
@@ -331,4 +336,3 @@ doy = doy(unq_idx);
  
 end %end of function
         
-
