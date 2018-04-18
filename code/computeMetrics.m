@@ -40,11 +40,11 @@ try
           
     % interpolation 
     study_years_dis = [study_years(1):time_step:(study_years(end)+1)]*1000;
-    valid_years_idx = find(study_years_dis>knots(1) & study_years_dis<knots(end));
+    valid_years_idx = study_years_dis>knots(1) & study_years_dis<knots(end);
     study_years_all = [knots(1) study_years_dis(valid_years_idx) knots(end)];
     coeff_interp = interp1(knots,coeffs,study_years_all,'linear');
     interp_pts = [study_years_all' coeff_interp'; knots(2:end-1) coeffs(2:end-1)];
-    interp_pts = sortrows(interp_pts); % this is an output
+    interp_pts_test = unique(interp_pts,'row'); % this is an output  
     
   % 2. disturbance detection
     change_percent = rises./abs(coeffs(1:end-1));
