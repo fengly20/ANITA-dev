@@ -24,7 +24,7 @@ unique_OBJECTIDs = unique(tb.OBJECTID);
 vi_all = table2array(tb(:,{vi_type}));
 for params_it = 1:size(param_mat,1)
     param_line = param_mat(params_it,:);
-    parfor i = 1:min(max_draw,length(unique(tb.OBJECTID)))
+    for i = 1:min(max_draw,length(unique(tb.OBJECTID)))
         
         object_id = unique_OBJECTIDs(i);
         obj_idx = find(tb.OBJECTID==object_id); 

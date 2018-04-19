@@ -6,7 +6,7 @@ map_mat = zeros(rows,cols);
 delta = duration*1000;
 
 for i = 1:rows
-    parfor j = 1:cols
+    for j = 1:cols
         metrics_cell = metrics_cells{i,j};
         coeff_before = metrics_cell{12};
         start_date = metrics_cell{3};
