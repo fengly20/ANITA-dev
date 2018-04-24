@@ -100,10 +100,10 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
   end
 
 % remove possible duplicated im_date 
-[~, unq_idx] = unique(date_vec);
-date_vec = date_vec(unq_idx);
-px = px(unq_idx);
-doy = doy(unq_idx);
+  [~, unq_idx] = unique(date_vec);
+  date_vec = date_vec(unq_idx);
+  px = px(unq_idx);
+  doy = doy(unq_idx);
   
 %define the cell outputs in advance of loop. Final_knots stores date
 %values and final_coeffs stores spectral index values of breakpoints.
@@ -196,7 +196,7 @@ doy = doy(unq_idx);
               %ortho error using the current knot set
                 clear dist
                 dist = calDistance(knot_set,coeff_set,pts);
-                [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y);
+                [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,'movcv');
                     
                 while sum(ismember(coeff_indices,cand_idx))~=0   
                     [cand_idx,coeff] = findNextCandidate(coeff_indices,search_series,filt_dist,pct,y);        

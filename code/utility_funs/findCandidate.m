@@ -11,26 +11,40 @@
 %       posistive numbers and negative numbers. For breakpoint detection,
 %       the large chnage point can be identified as a breakpoint no matter
 %       it's posistive or negative so abs() is applied on zscore. 
-function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,x)
+function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,method)
 
   dist = min(dist,[],2);
 
   mov_mean = movmean(dist,filt_dist);
   mov_std = movstd(dist,filt_dist);
-  
   if sum(mov_std) == 0
       mov_std = mov_std+1;
   end
-  
-  mov_cv = mov_mean./mov_std;        
-  
-  if nargin > 5
-      zscore = (x-mov_mean)./mov_std;
-      search_series = abs(zscore);
-  else 
+ 
+  if strcmp(method,'movcv')
+      mov_cv = mov_mean./mov_std;
       search_series = mov_cv;
+  elseif strcmp(method,'zscore')
+      zscore = abs((dist-mov_mean)./mov_std);
+      search_series = zscore;
+  elseif strcmp(method,'movmean') 
+      search_series = mov_mean;
+  elseif strcmp(method,'movmedian')
+      search_series = smoothdata(dist,'movmedian',filt_dist);
+  elseif strcmp(method,'gaussian')
+      search_series = smoothdata(dist,'gaussian',filt_dist);
+  elseif strcmp(method,'lowess')
+      search_series = smoothdata(dist,'lowess',filt_dist);
+  elseif strcmp(method,'loess')
+      search_series = smoothdata(dist,'loess',filt_dist);
+  elseif strcmp(method,'rlowess')
+      search_series = smoothdata(dist,'rlowess',filt_dist);
+  elseif strcmp(method,'rloess')
+      search_series = smoothdata(dist,'rloess',filt_dist);
+  elseif strcmp(method,'sgolay')
+      search_series = smoothdata(dist,'sgolay',filt_dist);
   end
-
+  
   % in case that search_series has two (or more) max values equal to each
   % other, add a bit white noise to ensure that each value is unique 
   if length(unique(search_series))~=length(search_series)
