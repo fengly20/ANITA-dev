@@ -11,7 +11,7 @@
 %       posistive numbers and negative numbers. For breakpoint detection,
 %       the large chnage point can be identified as a breakpoint no matter
 %       it's posistive or negative so abs() is applied on zscore. 
-function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,method)
+function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,coeff_indices,method)
 
   dist = min(dist,[],2);
 
@@ -55,9 +55,18 @@ function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,met
   
   % candidate point needs to be found out of filt_dist of beginning or end
   % of time series
-  search_series_inner = search_series((filt_dist+1):(length(search_series)-filt_dist));
-  cand_idx = find(search_series==max(search_series_inner),1);
+  invalid_ss_idx = unique([1:filt_dist,((length(search_series)-filt_dist+1):length(search_series)),coeff_indices']);
+  search_series_inner = search_series;
+  search_series_inner(invalid_ss_idx) = [];
   
-  cand_idx_filt = cand_idx-((filt_dist-1)/2):1:cand_idx+((filt_dist-1)/2);
-  coeff = prctile(y(cand_idx_filt),pct);
+  if length(search_series_inner) == (filt_dist-1)*2 
+      cand_idx = -999;
+      coeff = -999;
+  else
+    %search_series_inner = search_series((filt_dist+1):(length(search_series)-filt_dist));
+      cand_idx = find(search_series==max(search_series_inner),1);  
+      cand_idx_filt = cand_idx-((filt_dist-1)/2):1:cand_idx+((filt_dist-1)/2);
+      coeff = prctile(y(cand_idx_filt),pct);
+  end
+
 end 

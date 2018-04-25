@@ -196,11 +196,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
               %ortho error using the current knot set
                 clear dist
                 dist = calDistance(knot_set,coeff_set,pts);
-                [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,'movcv');
-                    
-                while sum(ismember(coeff_indices,cand_idx))~=0   
-                    [cand_idx,coeff] = findNextCandidate(coeff_indices,search_series,filt_dist,pct,y);        
-                end
+                [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,coeff_indices,'movmedian');
          
                 if cand_idx == -999
                     break
