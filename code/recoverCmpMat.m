@@ -9,7 +9,7 @@ for i = 1:rows
     for j = 1:cols
         metrics_cell = metrics_cells{i,j};
         coeff_before = metrics_cell{12};
-        start_date = metrics_cell{3};
+        start_date = metrics_cell{4};
         end_date = start_date+delta;
         map_mat(i,j) = valueChange(start_date,end_date,'value',metrics_cell)/coeff_before;
     end
