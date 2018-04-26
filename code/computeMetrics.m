@@ -64,7 +64,7 @@ try
             coeff_nadir = coeffs(dist_idx(2)+1); % this is an output
           %this ONLY works with distributed dates!
             dist_duration = dist_date_nadir-dist_date_before; % this is an output
-            dist_mag = abs(coeff_nadir-coeff_before); % this is an output
+            dist_mag = coeff_nadir-coeff_before; % this is an output
             dist_slope = dist_mag/dist_duration; % this is an output
                
             if length(slopes)>dist_idx(2) % this is the case that the disturbance is not the last segament
