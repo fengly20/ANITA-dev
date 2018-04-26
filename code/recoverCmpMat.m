@@ -11,7 +11,7 @@ for i = 1:rows
         coeff_before = metrics_cell{12};
         start_date = metrics_cell{3};
         end_date = start_date+delta;
-        map_mat(i,j) = valueChange(start_date,end_date,'diff',metrics_cell)/coeff_before;
+        map_mat(i,j) = valueChange(start_date,end_date,'value',metrics_cell)/coeff_before;
     end
     if nargin>2 
         if mod(i,10)==0
