@@ -67,8 +67,8 @@ for params_it = 1:size(param_mat,1)
      end
      rmse_mean(params_it) = mean(rmse);
      rmse_med(params_it) = median(rmse);
-     if mod(params_it,10)==10
-         params_it
+     if mod(params_it,10)==0
+         disp(params_it)
      end
 end
 
