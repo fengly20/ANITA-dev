@@ -1,0 +1,5 @@
+# git ignores below
+
+input/*
+control_file/*
+docs/metrics.pptx
