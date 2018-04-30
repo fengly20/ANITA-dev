@@ -14,7 +14,7 @@ try
     fit_y = results_cell{10}(:,2);
 
 
-    axis_in = [min(x) max(x) min(y) max(y)];
+    
 
     if strcmp(option,'allvi')
         c = doy(good_idx);
@@ -26,6 +26,7 @@ try
         box on
         plot(knot_set,coeff_set,'ro')
         plot(knot_set,coeff_set,'-r')
+        axis_in = [min(x) max(x) min(y) max(y)];
         axis(axis_in)
         if strcmp(cb,'on')
             colorbar
@@ -40,6 +41,7 @@ try
         box on
         plot(knot_set,coeff_set,'ro')
         plot(knot_set,coeff_set,'-r')
+        axis_in = [min(fit_x) max(fit_x) min(fit_y) max(fit_y)];
         axis(axis_in)
         if strcmp(cb,'on')
             colorbar
