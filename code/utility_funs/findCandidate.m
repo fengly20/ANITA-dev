@@ -48,7 +48,7 @@ function [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,met
   % in case that search_series has two (or more) max values equal to each
   % other, add a bit white noise to ensure that each value is unique 
   if length(unique(search_series))~=length(search_series)
-      noise_amplitude = 0.00000000000001;
+      noise_amplitude = 0.000000000000000000001;
       noise = noise_amplitude*randn(1, length(search_series))';
       search_series = search_series+noise;
   end
