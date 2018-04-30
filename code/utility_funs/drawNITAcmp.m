@@ -28,7 +28,7 @@ unique_OBJECTIDs = unique(tb.OBJECTID);
 vi_all = table2array(tb(:,{vi_type}));
 for params_it = 1:size(param_mat,1)
     param_line = param_mat(params_it,:);
-    for i = 1:min(max_draw,length(unique(tb.OBJECTID)))
+    parfor i = 1:min(max_draw,length(unique(tb.OBJECTID)))
         
         object_id = unique_OBJECTIDs(i);
         obj_idx = find(tb.OBJECTID==object_id); 
@@ -67,10 +67,11 @@ for params_it = 1:size(param_mat,1)
      end
      rmse_mean(params_it) = mean(rmse);
      rmse_med(params_it) = median(rmse);
-     if mod(param_it,10)==10
-         param_it
+     if mod(params_it,10)==10
+         params_it
      end
 end
+
 end
 
 
