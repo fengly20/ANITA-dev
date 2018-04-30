@@ -1,4 +1,8 @@
-function [rmse_mean,rmse_med] = drawNITAcmp(tb,vi_type,vi_value_range,doy_limits,param_mat,max_draw,x_draw,y_draw)
+function [rmse_mean,rmse_med] = drawNITAcmp(tb,vi_type,vi_value_range,doy_limits,param_mat,max_draw,x_draw,y_draw,filter_opt)
+
+if exist('filter_opt','var')==0
+    filter_opt = 'movcv';
+end
 
 column_names = lower(tb.Properties.VariableNames);
 if ismember('objectid',column_names)~= 1
@@ -45,7 +49,7 @@ for params_it = 1:size(param_mat,1)
 
         results_cell = nita_px(vi,im_date,param_line(4),param_line(3),...
             param_line(5),param_line(2),...
-            param_line(1),doy,doy_limits,param_line(6),0,1);
+            param_line(1),doy,doy_limits,param_line(6),0,param_line(7),filter_opt);
         
         %[bail_cut,fit_count] = viewNITA(vi,im_date,results_cell,doy,'fitvi','on')
         
@@ -63,7 +67,9 @@ for params_it = 1:size(param_mat,1)
      end
      rmse_mean(params_it) = mean(rmse);
      rmse_med(params_it) = median(rmse);
-     params_it
+     if mod(param_it,10)==10
+         param_it
+     end
 end
 end
 

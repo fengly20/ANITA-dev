@@ -1,7 +1,6 @@
-function [results_cell] = nita_px(px, date_vec, penalty,...
-    bail_thresh, max_complex, filt_dist, pct, doy, doy_limits,...
-    noise_thresh, diag_plots, user_min_segs, compute_mask )
-
+function [results_cell] = nita_px(px,date_vec,penalty,...
+    bail_thresh,max_complex,filt_dist,pct,doy,doy_limits,...
+    noise_thresh,diag_plots,user_min_segs,compute_mask,filter_opt)
 %% Documentation 
 %anita code purpose:
 %using a time series of spectral information (e.g., NDVI, NBR) generate a
@@ -78,8 +77,16 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
   end
 
 %if user doesn't enter in a compute mask, assign to "1" always
-  if nargin<13
-      compute_mask=1;
+  if exist('compute_mask','var')==0
+      compute_mask = 1;
+  elseif not(ismember(compute_mask,[0 1]))
+      filter_opt = compute_mask;
+      compute_mask = 1;
+  end 
+  
+%if user doesn't enter in a filtere option, assign to "movcv" always
+  if exist('filter_opt','var')==0
+      filter_opt = 'movcv';
   end
   
 %if input image line is not double, it must be converted
@@ -196,7 +203,7 @@ function [results_cell] = nita_px(px, date_vec, penalty,...
               %ortho error using the current knot set
                 clear dist
                 dist = calDistance(knot_set,coeff_set,pts);
-                [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,coeff_indices,'movmedian');
+                [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,filter_opt);
          
                 if cand_idx == -999
                     break
