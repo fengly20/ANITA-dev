@@ -11,7 +11,7 @@
 %       posistive numbers and negative numbers. For breakpoint detection,
 %       the large chnage point can be identified as a breakpoint no matter
 %       it's posistive or negative so abs() is applied on zscore. 
-function [cand_idx,coeff,search_series] = findCandidate(dist,filt_dist,pct,y,coeff_indices,method)
+function [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,method)
 
   dist = min(dist,[],2);
 
