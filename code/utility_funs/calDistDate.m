@@ -8,7 +8,7 @@ function dist_date = calDistDate(metrics_cell,option)
 dist_date_before = metrics_cell{3};
 dist_date_nadir = metrics_cell{4};
 
-if strcmp(option,'begining')
+if strcmp(option,'beginning')
     dist_date = dist_date_before;
 elseif strcmp(option,'middle')
     dist_date = (dist_date_before+dist_date_nadir)/2;
