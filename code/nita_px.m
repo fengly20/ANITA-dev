@@ -1,6 +1,28 @@
-function [results_cell] = nita_px(px,date_vec,penalty,...
-    bail_thresh,max_complex,filt_dist,pct,doy,doy_limits,...
-    noise_thresh,diag_plots,user_min_segs,compute_mask,filter_opt)
+function [results_cell] = nita_px(px,date_vec,doy_vec,...
+    doy_limits,date_limits,bail_thresh,noise_thresh,...
+    penalty,filt_dist,pct,max_complex,min_complex,...
+    compute_mask,filter_opt)
+%% Input arguments: 
+% Data: 
+%     'px'
+%     'date_vec'
+%     'doy_vec'
+% Constraints: 
+%     'doy_limits'
+%     'date_limits'
+%     'bail_thresh'
+%     'noise_thresh'
+% Numerical args: 
+%     'penalty'
+%     'filt_dist'
+%     'pct'
+%     'max_complex'
+%     'min_complex'
+% Switches: 
+%     'compute_mask'
+% Options: 
+%     'filter_opt'
+
 %% Documentation 
 %anita code purpose:
 %using a time series of spectral information (e.g., NDVI, NBR) generate a
@@ -71,67 +93,46 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
 %%
 % ---
 % 0. check the inputs
-%if user doesn't enter in a compute mask, assign to "1" always
-  if nargin<12
-      error('not enough input arguments!');
-  end
 
-%if user doesn't enter in a compute mask, assign to "1" always
-  if exist('compute_mask','var')==0
-      compute_mask = 1;
-  elseif not(ismember(compute_mask,[0 1]))
-      filter_opt = compute_mask;
-      compute_mask = 1;
-  end 
-  
-%if user doesn't enter in a filtere option, assign to "movcv" always
-  if exist('filter_opt','var')==0
-      filter_opt = 'movcv';
-  end
-  
-%if input image line is not double, it must be converted
+% check the data inputs 
+
+% if input image line is not double, it must be converted
   if ~isa(px,'double')
       px = double(px);
   end
   
-%if dates come in as 1xn, need to transpose to nx1 to match the output
-%of squeeze
-  if size(date_vec,2)>size(date_vec,1)
-      date_vec = date_vec';
-  end
+% if dates come in as 1xn, need to transpose to nx1 to match the output of squeeze
   if size(px,2)>size(px,1)
       px = px';
   end
-  if size(doy,2)>size(doy,1)
-      doy = doy';
+  
+  if size(date_vec,2)>size(date_vec,1)
+      date_vec = date_vec';
   end
-
-% remove possible duplicated im_date 
+  
+  if size(doy_vec,2)>size(doy_vec,1)
+      doy_vec = doy_vec';
+  end
+  
+% remove possible duplicated im_date
+% for example it's possible to get two different values for the same
+% distributed date (due to image overlaping), in such case the first value
+% is kept (no pericular reason to decide which one is discarded). 
   [~, unq_idx] = unique(date_vec);
   date_vec = date_vec(unq_idx);
   px = px(unq_idx);
-  doy = doy(unq_idx);
-  
-%define the cell outputs in advance of loop. Final_knots stores date
-%values and final_coeffs stores spectral index values of breakpoints.
-%  final_knots = cell(size(px,2),1);
-%  final_coeffs = cell(size(px,2),1);
+  doy_vec = doy_vec(unq_idx);
 
-%loop through all samples of line (1 x numSamp x numDates)
 %%  
   try
 %%      
 % --- 
 % 0.5 prepare x and y 
-    %set x and y
       x = date_vec;
       y = px;
-           
-    %screen or do not screen for seasonal limits using doy_limit
-    %parameter
-      non_nan_idx = findDataIndex(doy_limits, y, doy);
-      x = double(x(non_nan_idx));
-      y = double(y(non_nan_idx));
+    
+    % apply doy_limits and date_limits 
+      [x,y,doy_vec] = filterDateDoyLimits(x,y,doy_vec,date_limits,doy_limits);
             
     %noise calc (in spectral index units)
       noise = median(abs(diff(y)));
@@ -142,52 +143,38 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
       x = x(good_idx);
       y = y(good_idx);
       x_len = length(x);
-%% 
+
 % ---
 % 0.6 sanity check of x and y 
     % check for adequate date 
       if x_len <= (filt_dist*2) 
-          error(''); 
+          error('Not enough data pairs!'); 
       end
 %%
 % ---
 % 1. single line fit 
-    %set starting coeffs (first date and last date and first SI
-    %value and last SI value)
+    %set starting coeffs (first date and last date and first VI and last VI)
       first_coeff = prctile(y(1:filt_dist),pct);
       last_coeff = prctile(y(end-filt_dist:end),pct);
 
-    %use the line established by the first_coeff and last_coeff above
-    %use orthogonal distance from that line to find location of
-    %first candidate breakpoint
-    %ortho error
       knot_set =  [x(1);x(end)]; 
       coeff_set = [first_coeff;last_coeff];
       coeff_indices = [1;x_len];
       
       pts = [x y];
 
+    % calculate ortho error for the single line fit 
       dist_init = calDistance(knot_set,coeff_set, pts);
       mae_lin = calMae(dist_init);
 
-    %set knot location and establish tentative knot set (comprised
-    %currently of start date, first candidate breakpoint, and end
-    %date)
-      %knot_loc = x(cand_idx);
-      %[knot_set,coeff_set,coeff_indices] = updateknotcoeffSet(knot_set,coeff_set,coeff_indices,knot_loc,cand_idx,coeff);
-           
-    %diagnostic plot for linear fit section
-      if diag_plots==1
-          figure, hold on 
-          plot(x,y,'.')
-          plot([min(x) max(x)],[first_coeff last_coeff])
-          plot(knot_set, coeff_set)
-          %plot(x,mov_cv*1,'-g')
-      end
+    % diagnostic plot for linear fit section
+      %figure, hold on 
+      %plot(x,y,'.')
+      %plot(knot_set, coeff_set)
+          
 %%      
 % ---
 % 2. NITA
-
       if mae_lin/noise > bail_thresh && compute_mask==1 %determine whether to run full code
 %%       
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -195,11 +182,12 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
         %locations are selected and added up to max_complex
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                                 
-        %set starting conditions for for-loop
+        % set starting conditions for for-loop
           mae_ortho(1) = mae_lin;
-        %this will run until max_complex or until there are no more
-        %viable breakpoints to add.
-          for i=2:max_complex 
+          
+        % this will run until max_complex or until there are no more 
+        % aviable breakpoints can be added .
+          for i = 2:max_complex 
               %ortho error using the current knot set
                 clear dist
                 dist = calDistance(knot_set,coeff_set,pts);
@@ -215,74 +203,67 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
           end % end of for i=2:max_complex  
  
           complexity_count = length(knot_set)-1;
-        %grab final error
-          mae_final = mae_ortho(complexity_count);
-        %working on roll back
-          %keep_knots = knots_prev;
-          %keep_coeffs = coeffs_prev;
-          keep_knots = knot_set;
-          keep_coeffs = coeff_set;
-             
-          if diag_plots == 1
-              figure, hold on
-              plot(x,y,'r.')
-              plot(keep_knots,keep_coeffs,'o')
-              line(keep_knots, keep_coeffs)
-%             axis([min(x) max(x) -5000 7000])
-          end % end of if diag_plots == 1
           
+        % grab final error
+          mae_final = mae_ortho(complexity_count);
+        
+          %figure, hold on
+          %plot(x,y,'r.')
+          %plot(knot_set,coeff_set,'o')
+          %axis([min(x) max(x) -5000 7000])
+  
 %%          
 % ---
-% 3. now take knots away iteratively
+% 3. BIC removal process 
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %now take knots away iteratively
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          clear mae_ortho; clear bic_remove; clear num_segs;
-          clear coeff_storage; clear knot_storage;
+          
+        % *_max saved as copies 
+          knots_max = knot_set;
+          coeffs_max = coeff_set;
         
-          knots_max = keep_knots;
-          coeffs_max = keep_coeffs;
-          %mae_ortho(1) = mae_final;
+        % keep_* will go into for loop and shrink every time   
+          keep_knots = knot_set;
+          keep_coeffs = coeff_set;
+          %mae_ortho(1) = mae_final
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %Do while there are more than 2 knots being evaluated. That
-        %is, check the BIC for num knots = max_complex
-        %incrementally down to num knots = 2
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-          [~, unq_idx] = unique(keep_knots);
-          yinterp1 = interp1(knots_max(unq_idx),coeffs_max(unq_idx),x,'linear');
+          yinterp1 = interp1(knots_max,coeffs_max,x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
-          for i=1:complexity_count-(user_min_segs-1)
-            %loop through knots, removing each and checking which
-            %raises MAE the least compared to weighted data
+          
+          for i=1:complexity_count-(min_complex-1)
+            % loop through knots, removing each and checking which
+            % raises MAE the least compared to weighted data
               keep_idx{i} = genKeepIdx(keep_knots,keep_coeffs,pts,pct,y_pos_idx);
    
-            %need to reccalc ortho_err BEFORE the if statement
-            %because the bic will now be the point of entry
+            % need to reccalc ortho_err BEFORE the if statement
+            % because the bic will now be the point of entry
               clear dist
               dist = calDistance(keep_knots,keep_coeffs,pts);
               ortho_err = min(dist,[],2);
-            %here is the reweighting of the error based on pct. If
-            %you chose pct = 75 then places where your fit
-            %underestimates are more important to fix.
+              mae_ortho_holder(i) = calMae(dist);
+              
+            % here is the reweighting of the error based on pct. If
+            % you chose pct = 75 then places where your fit
+            % underestimates are more important to fix.
               ortho_err(y_pos_idx) = ortho_err(y_pos_idx)*pct;
               ortho_err(~y_pos_idx) = ortho_err(~y_pos_idx)*(100-pct);
-              mae_ortho_holder(i) = mean(min(dist,[],2));
-            
-            bic_remove(i) = calBIC(ortho_err,keep_knots,penalty);  
+    
+              bic_remove(i) = calBIC(ortho_err,keep_knots,penalty);  
 
-            if i==1
-                knot_storage{i} = knots_max;
-                coeff_storage{i} = coeffs_max;
-            else                       
-                knot_storage{i} = keep_knots(keep_idx{i});
-                coeff_storage{i} = keep_coeffs(keep_idx{i});
+              if i==1
+                  knot_storage{i} = knots_max;
+                  coeff_storage{i} = coeffs_max;
+              else                       
+                  knot_storage{i} = keep_knots(keep_idx{i});
+                  coeff_storage{i} = keep_coeffs(keep_idx{i});
 
-              %reduce the number of knots and coeffs each
-              %iteration
-                keep_coeffs = keep_coeffs(keep_idx{i});
-                keep_knots = keep_knots(keep_idx{i});
-            end 
+            % reduce the number of knots and coeffs each
+            % iteration
+                  keep_coeffs = keep_coeffs(keep_idx{i});
+                  keep_knots = keep_knots(keep_idx{i});
+              end 
           end
               
           bic_idx = find(bic_remove==min(bic_remove));
@@ -290,13 +271,11 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
           keep_knots = knot_storage{bic_idx};
           mae_final = mae_ortho_holder(bic_idx);    
              
-          if diag_plots == 1
-              figure, hold on
-              plot(x,y,'r.')
-              plot(keep_knots,keep_coeffs,'o')
-              plot(keep_knots, keep_coeffs)
-%             axis([min(x) max(x) -5000 7000])
-          end % end of if diag_plots == 1
+          %figure, hold on
+          %plot(x,y,'r.')
+          %plot(keep_knots,keep_coeffs,'o')
+          %plot(keep_knots, keep_coeffs)
+          %axis([min(x) max(x) -5000 7000])
           
         %outputs assuming the NITA code ran
           complexity = length(keep_knots)-1;
@@ -306,22 +285,18 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
           mae_final_ortho = mae_final;
           mae_linear = mae_lin;
           noise_out = noise;
-      end % end of if mae_lin/noise > bail_thresh
-    %only populate for linear model if not already populated by
-    %NITA
-      if mae_lin/noise <= bail_thresh
+      else
           complexity = 1;
           final_knots = [min(x);max(x)];
           final_coeffs = [first_coeff; last_coeff];
-          %error (mae)
           mae_final_ortho = mae_lin;
           mae_linear = mae_lin;
           noise_out = noise;
-      end % end of  if mae_lin/noise <= bail_thresh
+      end % end of  if mae_lin/noise <= bail_thresh && compute_mask == 1
       rises = diff(final_coeffs);
       runs = diff(final_knots);     
       runs_days = runs/1000*365;
-  catch
+  catch %error_report 
       complexity = -999;
       final_knots = -999;
       final_coeffs = -999;
@@ -337,9 +312,10 @@ function [results_cell] = nita_px(px,date_vec,penalty,...
 %results output
   results_cell = {complexity final_knots final_coeffs mae_linear mae_final_ortho noise_out rises runs runs_days pts};
 
-%"progress bar" (can reinstate if using multicore)
-%       ff('line: %u\n',line_num)
-%       fprintf('avg pixel time for this line: %u\n',mean(toc_i))
- 
-end %end of function
+% print out the error message
+%  if exist(error_report,'var') == 1
+%      disp(error_report.message)
+%  end
+  
+end %end of the function
         
