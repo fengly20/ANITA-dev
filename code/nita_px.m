@@ -1,5 +1,5 @@
-function [results_cell] = nita_px(px,date_vec,doy_vec,...
-    doy_limits,date_limits,bail_thresh,noise_thresh,...
+function results_cell = nita_px(px,date_vec,doy_vec,...
+    value_limits,doy_limits,date_limits,bail_thresh,noise_thresh,...
     penalty,filt_dist,pct,max_complex,min_complex,...
     compute_mask,filter_opt)
 %% Input arguments: 
@@ -131,8 +131,8 @@ function [results_cell] = nita_px(px,date_vec,doy_vec,...
       x = date_vec;
       y = px;
     
-    % apply doy_limits and date_limits 
-      [x,y,doy_vec] = filterDateDoyLimits(x,y,doy_vec,date_limits,doy_limits);
+    % apply value_limits, doy_limits and date_limits 
+      [x,y,doy_vec] = filterLimits(x,y,doy_vec,value_limits,date_limits,doy_limits);
             
     %noise calc (in spectral index units)
       noise = median(abs(diff(y)));
@@ -188,7 +188,7 @@ function [results_cell] = nita_px(px,date_vec,doy_vec,...
         % this will run until max_complex or until there are no more 
         % aviable breakpoints can be added .
           for i = 2:max_complex 
-              %ortho error using the current knot set
+              % ortho error using the current knot set
                 clear dist
                 dist = calDistance(knot_set,coeff_set,pts);
                 [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,filter_opt);

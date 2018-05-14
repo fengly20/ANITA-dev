@@ -49,7 +49,7 @@ function [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,met
   % other, add a bit white noise to ensure that each value is unique 
   if length(unique(search_series))~=length(search_series)
       noise_amplitude = 0.000000000000000000001;
-      noise = noise_amplitude*randn(1, length(search_series))';
+      noise = noise_amplitude*randn(1,length(search_series))';
       search_series = search_series+noise;
   end
   
@@ -63,7 +63,6 @@ function [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,met
       cand_idx = -999;
       coeff = -999;
   else
-    %search_series_inner = search_series((filt_dist+1):(length(search_series)-filt_dist));
       cand_idx = find(search_series==max(search_series_inner),1);  
       cand_idx_filt = cand_idx-((filt_dist-1)/2):1:cand_idx+((filt_dist-1)/2);
       coeff = prctile(y(cand_idx_filt),pct);

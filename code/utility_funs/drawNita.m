@@ -1,4 +1,4 @@
-function [x_draw, y_draw] = drawNita(tb,vi_type,vi_value_range,doy_limits,max_draw,info_col)
+function [x_draw, y_draw] = drawNita(tb,vi_type,value_limits,doy_limits,date_limits,draw_objid,info_col)
 
 % ---
 %1. check the table
@@ -15,7 +15,7 @@ if ismember('system_index',column_names)~= 1
     error('No system_index column in the table');
 end
 
-if nargin==6
+if nargin==7
     if ismember(info_col,column_names)~= 1
         error(['No ' info_col ' column in the table']);
     end 
@@ -30,14 +30,20 @@ tb = table_sort(:,2:end);
 
 % ---
 %2. loop through each point 
-unique_OBJECTIDs = unique(tb.OBJECTID);
-draw_count = min(length(unique_OBJECTIDs),max_draw);
+all_OBJECTIDs = unique(tb.OBJECTID); 
+
+if draw_objid == 9999 
+    unique_OBJECTIDs = all_OBJECTIDs;
+else 
+    unique_OBJECTIDs = intersect(unique(draw_objid),all_OBJECTIDs);
+end
+
 vi_all = table2array(tb(:,{vi_type}));
-for i=1:draw_count
+for i=1:length(unique_OBJECTIDs)
     object_id = unique_OBJECTIDs(i);
     obj_idx = find(tb.OBJECTID==object_id); 
     
-    if nargin==6
+    if nargin==7
         temp = table2array(tb(:,{info_col}));
         plot_info = char(unique(temp(obj_idx)));
     else
@@ -49,20 +55,12 @@ for i=1:draw_count
     doy = doy_all(obj_idx);
     vi = vi_all(obj_idx);
     
-    non_nan_idx = findDataIndex(doy_limits, vi, doy);
-    vi = vi(non_nan_idx);
-    im_date = im_date(non_nan_idx);
-    doy = doy(non_nan_idx);
-    
-    vi_idx = find(vi>vi_value_range(1) & vi<=vi_value_range(end));
-    vi = vi(vi_idx);
-    im_date = im_date(vi_idx);
-    doy = doy(vi_idx);
+    [im_date,vi,doy] = filterLimits(im_date,vi,doy,value_limits,date_limits,doy_limits);
     
     figure, hold on
          scatter(im_date, vi, 100, doy,'.')
          colorbar;
-         axis([min(im_date) max(im_date) vi_value_range])
+         axis([min(im_date) max(im_date) value_limits])
          title([num2str(object_id) ' ' plot_info])
 
      [x_draw{i}, y_draw{i}] = ginput();

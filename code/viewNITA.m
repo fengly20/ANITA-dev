@@ -13,9 +13,6 @@ try
     fit_x = results_cell{10}(:,1);
     fit_y = results_cell{10}(:,2);
 
-
-    
-
     if strcmp(option,'allvi')
         c = doy(good_idx);
         scatter(x,y,20,c,'filled')
