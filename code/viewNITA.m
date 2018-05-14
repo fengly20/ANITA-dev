@@ -55,5 +55,4 @@ catch
     fit_count = NaN;
 end
 
-
 end
