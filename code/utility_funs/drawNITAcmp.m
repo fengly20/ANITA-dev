@@ -33,8 +33,8 @@ end
 
 for param_it = 1:size(param_mat,2)
     param_line = param_mat{param_it};
-    parfor i = 1:length(draw_objid)
-        object_id = draw_objid(i);
+    parfor i = 1:length(unique_OBJECTIDs)
+        object_id = unique_OBJECTIDs(i);
         im_date = date_num(tb.OBJECTID==object_id);
         doy = doy_all(tb.OBJECTID==object_id);
         vi = vi_all(tb.OBJECTID==object_id);
