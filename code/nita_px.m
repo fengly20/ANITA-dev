@@ -8,6 +8,7 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
 %     'date_vec'
 %     'doy_vec'
 % Constraints: 
+%     'value_limits'
 %     'doy_limits'
 %     'date_limits'
 %     'bail_thresh'
