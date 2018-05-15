@@ -70,6 +70,7 @@ for i=1:length(unique_OBJECTIDs)
          axis([min(im_date) max(im_date) value_limits])
          title([num2str(object_id) ' ' plot_info])
   
+    pause(0.5);
 end
 
 end
