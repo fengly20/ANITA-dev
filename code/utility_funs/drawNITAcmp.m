@@ -21,10 +21,15 @@ date_num = genDisDate(im_date_all,doy_all);
 table_sort = sortrows([array2table(date_num) tb], 1);
 date_num = table_sort{:,1}; %converts back to double
 tb = table_sort(:,2:end);
+
 vi_all = table2array(tb(:,{vi_type}));
 
-if draw_objid == 9999
-    draw_objid = sort(unique(tb.OBJECTID));
+all_OBJECTIDs = unique(tb.OBJECTID); 
+if draw_objid == 9999 
+    unique_OBJECTIDs = all_OBJECTIDs;
+else 
+    unique_OBJECTIDs = intersect(unique(draw_objid),all_OBJECTIDs);
+end
 
 for param_it = 1:size(param_mat,2)
     param_line = param_mat{param_it};
