@@ -66,13 +66,25 @@ for i=1:length(unique_OBJECTIDs)
      [x_draw{i}, y_draw{i}] = ginput();
      
     close
+    
+    % perform a correction on hand-draw trajectory 
+    % possible corrections are:
+    % (1) correct double click (non unique data pairs)
+    % (2) correct backwards x values (assuming y values are reasonable)
+
+    % (1)
+    [~,~,tp_uni_idx] = unique([x_draw{i} y_draw{i}],'row','stable');
+    x_draw{i} = x_draw{i}(tp_uni_idx);
+    y_draw{i} = y_draw{i}(tp_uni_idx);
+
+    % (2)
+    for j=2:length(x_draw{i})
+        tp_bw_flag = (x_draw{i}(j) - x_draw{i}(j-1)) <= 0;
+        if tp_bw_flag
+            x_draw{i}(j) = x_draw{i}(j-1)+3;
+        end
+    end
+    
 end
 
 end
-
-
-
-
-
-
-
