@@ -16,7 +16,7 @@ if ismember('system_index',column_names)~= 1
 end
 
 if nargin==7
-    if ismember(info_col,column_names)~= 1
+    if ismember(lower(info_col),column_names)~= 1
         error(['No ' info_col ' column in the table']);
     end 
 end
