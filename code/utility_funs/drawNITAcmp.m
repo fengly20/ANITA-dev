@@ -1,4 +1,4 @@
-function [rmse_mean,rmse_med] = drawNITAcmp(tb,vi_type,...
+function [rmse_mean,rmse_med,pct95_mean] = drawNITAcmp(tb,vi_type,...
     value_limits,doy_limits,date_limits,compute_mask,...
     param_mat,draw_objid,x_draw,y_draw)
 
@@ -56,9 +56,12 @@ for param_it = 1:size(param_mat,2)
         % assess rmse of fit
         sq_error = (draw_interp-nita_interp).^2;
         rmse(i) = sqrt(mean(sq_error));  
+        
+        pct95_err(i) = sqrt(prctile(sq_error,95));
     end
     rmse_mean(param_it) = mean(rmse);
     rmse_med(param_it) = median(rmse);
+    pct95_mean(param_it) = mean(pct95_err);
     
     if mod(param_it,10)==0
         disp(param_it)
