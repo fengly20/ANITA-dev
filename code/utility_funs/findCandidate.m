@@ -59,7 +59,7 @@ function [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,met
   search_series_inner = search_series;
   search_series_inner(invalid_ss_idx) = [];
   
-  if length(search_series_inner) == (filt_dist-1)*2 
+  if isempty(search_series_inner)
       cand_idx = -999;
       coeff = -999;
   else
