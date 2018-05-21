@@ -32,6 +32,9 @@ tb = table_sort(:,2:end);
 
 % ---
 %2. find redo id location 
+if draw_objid == 9999 
+    draw_objid = unique(tb.OBJECTID);
+end
 
 loc_idx = find(ismember(draw_objid,redo_objid));
 
