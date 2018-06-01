@@ -211,9 +211,6 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
           end % end of for i=2:max_complex  
  
           complexity_count = length(knot_set)-1;
-          
-        % grab final error
-          %mae_final = mae_ortho(complexity_count);
         
           %figure, hold on
           %plot(x,y,'r.')
