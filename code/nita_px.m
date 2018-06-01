@@ -233,7 +233,11 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
           yinterp1 = interp1(knots_max,coeffs_max,x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
           
-          exit_count = max(complexity_count,min_complex);
+          if complexity_count < min_complex
+              exit_count = complexity_count;
+          else
+              exit_count = min_complex;
+          end        
           
           for i=1:complexity_count-(exit_count-1)
             % loop through knots, removing each and checking which
