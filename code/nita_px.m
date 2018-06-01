@@ -156,7 +156,7 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
 % 1. single line fit 
     %set starting coeffs (first date and last date and first VI and last VI)
       first_coeff = prctile(y(1:filt_dist),pct);
-      last_coeff = prctile(y(end-filt_dist:end),pct);
+      last_coeff = prctile(y(end-filt_dist+1:end),pct);
 
       knot_set =  [x(1);x(end)]; 
       coeff_set = [first_coeff;last_coeff];
@@ -233,7 +233,9 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
           yinterp1 = interp1(knots_max,coeffs_max,x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
           
-          for i=1:complexity_count-(min_complex-1)
+          exit_count = min(complexity_count,min_complex);
+          
+          for i=1:complexity_count-(exit_count-1)
             % loop through knots, removing each and checking which
             % raises MAE the least compared to weighted data
               keep_idx{i} = genKeepIdx(keep_knots,keep_coeffs,pts,pct,y_pos_idx);
