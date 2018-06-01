@@ -1,4 +1,4 @@
-function results_cell = nita_px(px,date_vec,doy_vec,...
+function results_cell = nita_px_new(px,date_vec,doy_vec,...
     value_limits,doy_limits,date_limits,bail_thresh,noise_thresh,...
     penalty,filt_dist,pct,max_complex,min_complex,...
     compute_mask,filter_opt)
@@ -133,46 +133,50 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
       y = px;
     
     % apply value_limits, doy_limits and date_limits 
-      [x,y,doy_vec] = filterLimits(x,y,doy_vec,value_limits,date_limits,doy_limits);
+      [x,y,~] = filterLimits(x,y,doy_vec,value_limits,date_limits,doy_limits);
             
-    %noise calc (in spectral index units)
+    % noise calc (in spectral index units)
       noise = median(abs(diff(y)));
             
-    %filter by abs(diff) to get rid of bad noise per user threshold
+    % filter by abs(diff) to get rid of bad noise per user threshold
       diff_holder = diff(y);
       good_idx = find(abs(diff_holder) <= noise_thresh)+1;
       x = x(good_idx);
       y = y(good_idx);
       x_len = length(x);
-
-% ---
-% 0.6 sanity check of x and y 
+      
     % check for adequate date 
       if x_len <= (filt_dist*2) 
           error('Not enough data pairs!'); 
       end
+      
+    % gabage collection at the end of section 
+      clear date_vec px diff_holder good_idx
+       
 %%
 % ---
 % 1. single line fit 
-    %set starting coeffs (first date and last date and first VI and last VI)
+    % set starting coeffs (first date and last date and first VI and last VI)
       first_coeff = prctile(y(1:filt_dist),pct);
       last_coeff = prctile(y(end-filt_dist+1:end),pct);
 
       knot_set =  [x(1);x(end)]; 
       coeff_set = [first_coeff;last_coeff];
-      coeff_indices = [1;x_len];
+      loc_set = [1;x_len];
       
       pts = [x y];
 
     % calculate ortho error for the single line fit 
-      dist_init = calDistance(knot_set,coeff_set, pts);
+      dist_init = calDistance(knot_set,coeff_set,pts);
       mae_lin = calMae(dist_init);
 
     % diagnostic plot for linear fit section
       %figure, hold on 
       %plot(x,y,'.')
       %plot(knot_set, coeff_set)
-          
+    
+    % gabage collection at the end of section 
+      clear dist_init
 %%      
 % ---
 % 2. NITA
@@ -184,6 +188,9 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                                 
         % set starting conditions for for-loop
+          % tech note: the reason why the mae_ortho is not pre-allocated is 
+          %            becasue the length of mae_ortho is unknown 
+          %            for now -- it does not necessarily reach the max_complex 
           mae_ortho(1) = mae_lin;
           
         % this will run until max_complex or until there are no more 
@@ -192,13 +199,13 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
               % ortho error using the current knot set
                 clear dist
                 dist = calDistance(knot_set,coeff_set,pts);
-                [cand_idx,coeff] = findCandidate(dist,filt_dist,pct,y,coeff_indices,filter_opt);
+                [cand_loc,coeff] = findCandidate(dist,filt_dist,pct,y,loc_set,filter_opt);
          
-                if cand_idx == -999
+                if cand_loc == -999
                     break
                 end
               
-                [knot_set,coeff_set,coeff_indices] = updateknotcoeffSet(knot_set,coeff_set,coeff_indices,x,cand_idx,coeff);
+                [knot_set,coeff_set,loc_set] = updateknotcoeffSet(knot_set,coeff_set,loc_set,x,cand_loc,coeff);
                 dist_new = calDistance(knot_set,coeff_set, pts);
                 mae_ortho(i) = calMae(dist_new);
           end % end of for i=2:max_complex  
@@ -206,12 +213,15 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
           complexity_count = length(knot_set)-1;
           
         % grab final error
-          mae_final = mae_ortho(complexity_count);
+          %mae_final = mae_ortho(complexity_count);
         
           %figure, hold on
           %plot(x,y,'r.')
           %plot(knot_set,coeff_set,'o')
           %axis([min(x) max(x) -5000 7000])
+        
+        % gabage collection at the end of section 
+          clear dist cand_loc coeff dist_new
   
 %%          
 % ---
@@ -225,16 +235,40 @@ function results_cell = nita_px(px,date_vec,doy_vec,...
           knots_max = knot_set;
           coeffs_max = coeff_set;
         
-        % keep_* will go into for loop and shrink every time   
-          keep_knots = knot_set;
-          keep_coeffs = coeff_set;
-          %mae_ortho(1) = mae_final
-
+        % interpolate the piece-wise fit 
           yinterp1 = interp1(knots_max,coeffs_max,x,'linear');
           y_pos_idx = (y-yinterp1)>0;  
           
-          exit_count = max(complexity_count,min_complex);
+        % set starting conditions for for-loop
+        % pre-allocate some vectors 
+        % decide exit_count first then get the loop length 
+          exit_count = min(complexity_count,min_complex);
+        
+        
+        
+        
+        mae_ortho_holder
+        % BIC calculation for knots_max (no knot removed yet)
+          dist_init = calDistance(knots_max,coeffs_max,pts);
+          mae_ortho_holder(i) = calMae(dist);
           
+          
+          
+          
+          ortho_err = min(dist,[],2);
+              
+              
+            % here is the reweighting of the error based on pct. If
+            % you chose pct = 75 then places where your fit
+            % underestimates are more important to fix.
+              ortho_err(y_pos_idx) = ortho_err(y_pos_idx)*pct;
+              ortho_err(~y_pos_idx) = ortho_err(~y_pos_idx)*(100-pct);
+    
+              bic_remove(i) = calBIC(ortho_err,keep_knots,penalty);  
+          
+          
+          
+                  
           for i=1:complexity_count-(exit_count-1)
             % loop through knots, removing each and checking which
             % raises MAE the least compared to weighted data
