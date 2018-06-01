@@ -25,7 +25,7 @@ try
         plot(knot_set,coeff_set,'-r')
         axis_in = [min(x) max(x) min(y) max(y)];
         axis(axis_in)
-        set(gca,'YTickLabel',[]);
+        %set(gca,'YTickLabel',[]);
         if strcmp(cb,'on')
             colorbar
         end
@@ -41,7 +41,7 @@ try
         plot(knot_set,coeff_set,'-r')
         axis_in = [min(fit_x) max(fit_x) min(fit_y) max(fit_y)];
         axis(axis_in)
-        set(gca,'YTickLabel',[]);
+        %set(gca,'YTickLabel',[]);
         if strcmp(cb,'on')
             colorbar
         end
